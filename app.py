@@ -9,20 +9,17 @@ TELEGRAM_BOT_TOKEN = "8963611921:AAHr0jtCdhwoM5GwIQSou8-hZu2u6xYhYmg"
 TELEGRAM_CHAT_ID = "373404939"
 TWELVE_DATA_API_KEY = "4b8d4e01d3ec4c219f918fbdf849c35e"
 
-# 👇 الأصول الجديدة
 SYMBOLS = ["SOL/USD", "DOGE/USD"]
-INTERVAL = "1min"          # إطار دقيقة واحدة
+INTERVAL = "1min"
 EMA_FAST = 9
 EMA_SLOW = 21
 RSI_PERIOD = 14
-CHECK_INTERVAL_SECONDS = 180  # 3 دقائق (لتجنب حظر الـ API)
+CHECK_INTERVAL_SECONDS = 180
 
-# ========== توقيت السعودية ==========
 SAUDI_TZ = timezone(timedelta(hours=3))
 def saudi_now():
     return datetime.now(SAUDI_TZ)
 
-# ========== جلب البيانات ==========
 def fetch_data(symbol):
     url = "https://api.twelvedata.com/time_series"
     params = {
@@ -41,7 +38,6 @@ def fetch_data(symbol):
         print(f"⚠️ فشل الاتصال بـ {symbol}: {e}")
         return None
 
-# ========== حساب المؤشرات ==========
 def calculate_ema(prices, period):
     if len(prices) < period: return [0] * len(prices)
     ema = [sum(prices[:period]) / period]
@@ -68,7 +64,6 @@ def calculate_rsi(prices, period=14):
         rsi.append(100 - 100 / (1 + rs))
     return [50] * (len(prices) - len(rsi)) + rsi
 
-# ========== استخراج الإشارة ==========
 def generate_signal(prices):
     ema_fast = calculate_ema(prices, EMA_FAST)
     ema_slow = calculate_ema(prices, EMA_SLOW)
@@ -80,7 +75,7 @@ def generate_signal(prices):
     cross_up = ema_fast[-2] <= ema_slow[-2] and ema_fast[-1] > ema_slow[-1]
     cross_down = ema_fast[-2] >= ema_slow[-2] and ema_fast[-1] < ema_slow[-1]
     
-    print(f"   📊 السعر: {current_price:.4f} | RSI: {current_rsi:.2f} | EMA9: {ema_fast[-1]:.4f} | EMA21: {ema_slow[-1]:.4 =f}")
+    print(f"   📊 السعر: {current_price:.4f} | RSI: {current_rsi:.2f} | EMA9: {ema_fast[-1]:.4f} | EMA21: {ema_slow[-1]:.4f}")
     
     if cross_up and 50 < current_rsi < 70:
         return "BUY"
@@ -88,13 +83,17 @@ def generate_signal(prices):
         return "SELL"
     return None
 
-# ========== إرسال الإشارة ==========
 async def send_signal(symbol, signal_type):
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     action = "🟢 CALL UP ⬆️" if signal_type == "BUY" else "🔴 PUT DOWN ⬇️"
     entry_time = saudi_now().strftime("%I:%M:%S %p")
     
-    message f"📊 {symbol}\n⏰ {entry_time}\n⏳ 1 Minutes\n{action}"
+    message = (
+        f"📊 {symbol}\n"
+        f"⏰ {entry_time}\n"
+        f"⏳ 1 Minutes\n"
+        f"{action}"
+    )
     
     try:
         await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
@@ -102,7 +101,6 @@ async def send_signal(symbol, signal_type):
     except Exception as e:
         print(f"❌ فشل إرسال الإشارة: {e}")
 
-# ========== الحلقة الرئيسية ==========
 async def main_loop():
     print(f"🚀 بدء مراقبة {SYMBOLS} على إطار دقيقة واحدة...")
     while True:
