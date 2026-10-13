@@ -4,7 +4,7 @@ import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 def run_bot():
-    subprocess.run(["python", "app.py"])
+    subprocess.run(["python", "-u", "app_new.py"])
 
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
